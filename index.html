@@ -394,7 +394,7 @@ tr:hover td{background:rgba(108,99,255,.02)}
 
 <script>
 const PASSWORD='fithub2025';
-const SHEETS_URL='https://script.google.com/macros/s/AKfycbxSZpz7dXHR9rvTQaJ0Tht5zkKQiYHdUS-5Dv25BA_BGnEeh3bPwEDOFLHz9Zwd5fof/exec';
+const SHEETS_URL='https://script.google.com/macros/s/AKfycbx3OMvoQe04MacoZ5J1s3ghn7oKK_ODZV5kfFMS1LSzszUf6tQnvQwpDHTBuyvj984Y/exec';
 let pwUnlocked=false;
 let syncStatus='local'; // 'local','syncing','synced','error'
 
@@ -463,11 +463,21 @@ async function loadFromSheets(){
   try{
     const r=await fetch(SHEETS_URL+'?t='+Date.now());
     const data=await r.json();
-    if(data&&data.status==='ok'&&Array.isArray(data.data)&&data.data.length>0){
-      jobs=data.data;
-      localStorage.setItem('fh_jobs',JSON.stringify(jobs));
-      setSyncStatus('synced');
-      renderCalendar();
+    if(data&&data.status==='ok'&&Array.isArray(data.data)&&data.data.length>1){
+      const rows=data.data;
+      const headers=rows[0];
+      const parsed=rows.slice(1).map(row=>{
+        const obj={};
+        headers.forEach((h,i)=>obj[h]=row[i]);
+        if(typeof obj.employees==='string') obj.employees=obj.employees?obj.employees.split(','):[];
+        return obj;
+      });
+      if(parsed.length>0){
+        jobs=parsed;
+        localStorage.setItem('fh_jobs',JSON.stringify(jobs));
+        setSyncStatus('synced');
+        renderCalendar();
+      } else { setSyncStatus('local'); }
     } else { setSyncStatus('local'); }
   } catch(e){ setSyncStatus('error'); }
 }
